@@ -8,19 +8,23 @@ namespace UserRegistration.Controllers
     [Route("[controller]")]
     public class UserRegistrationController : ControllerBase
     {
+        ILogger<UserRegistrationController> _logger;
         UserRegistrationBL _userRegistrationBL;
 
-        public UserRegistrationController(UserRegistrationBL userRegistrationBL)
+        public UserRegistrationController(ILogger<UserRegistrationController> logger, UserRegistrationBL userRegistrationBL)
         {
+            _logger = logger; 
             _userRegistrationBL = userRegistrationBL;
 
         }
 
         [HttpGet]
-        public string Get()
+        public IActionResult Get()
         {
-            return "Server Running....";
+            _logger.LogInformation("Controller: Server is Starting Up...");
+            return Ok("Server Running....");
         }
+
 
         [HttpPost]
         [Route("register")]
@@ -28,6 +32,7 @@ namespace UserRegistration.Controllers
         {
             try
             {
+                _logger.LogInformation("Controller: Registering the User...");
                 _userRegistrationBL.RegisterUser(user);
                 return Ok(new ResponseModel<RegisterDTO> { Success = true, Message = "Registered Succesfully.", Data = user });
             }

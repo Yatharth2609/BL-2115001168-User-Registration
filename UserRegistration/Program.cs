@@ -1,22 +1,53 @@
 using BusinessLayer.Service;
+using Microsoft.EntityFrameworkCore;
+using NLog;
+using NLog.Web;
+using RepositoryLayer.Entity;
 using RepositoryLayer.Service;
 
-var builder = WebApplication.CreateBuilder(args);
+var logger = NLog.LogManager.Setup().LoadConfigurationFromFile("nlog.config").GetCurrentClassLogger();
+logger.Info("Starting Application...");
 
-// Add services to the container.
+try
+{
+    var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
-builder.Services.AddScoped<UserRegistrationBL>();
-builder.Services.AddScoped<UserRegistrationRL>();
+    builder.Services.AddSwaggerGen();
 
-var app = builder.Build();
+    builder.Logging.ClearProviders();
+    builder.Host.UseNLog();
 
-// Configure the HTTP request pipeline.
+    // Add services to the container.
 
-app.UseHttpsRedirection();
+    builder.Services.AddControllers();
+    builder.Services.AddScoped<UserRegistrationBL>();
+    builder.Services.AddScoped<UserRegistrationRL>();
 
-app.UseAuthorization();
 
-app.MapControllers();
+    var connectionString = builder.Configuration.GetConnectionString("SqlConnection");
+    builder.Services.AddDbContext<UserRegistrationContext>(options => options.UseSqlServer(connectionString));
 
-app.Run();
+
+    var app = builder.Build();
+    app.UseSwagger();
+    app.UseSwaggerUI();
+
+    // Configure the HTTP request pipeline.m,
+
+    app.UseHttpsRedirection();
+
+    app.UseAuthorization();
+
+    app.MapControllers();
+
+    app.Run();
+
+}
+catch(Exception ex)
+{
+    logger.Error(ex, "Application stopped due to an exception");
+}
+finally
+{
+    NLog.LogManager.Shutdown();
+}
